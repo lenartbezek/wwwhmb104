@@ -6,10 +6,10 @@ import { buildServer } from "./server";
 
 async function start() {
 
-    await connectToDb();
+    const { db } = await connectToDb();
 
     const app = express();
-    const server = buildServer(schema);
+    const server = buildServer(schema, { db });
 
     server.applyMiddleware({ app });
 

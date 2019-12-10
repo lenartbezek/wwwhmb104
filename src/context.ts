@@ -1,16 +1,18 @@
 import { Request, Response } from "express";
 import { Db } from "mongodb";
-import { connectToDb } from "./mongo";
 
 export class Context {
 
-    public db?: Db;
+    public db: Db;
 
     constructor(
         public readonly req: Request,
         public readonly res: Response,
+        dependencies: {
+            db: Db;
+        },
     ) {
-        connectToDb().then(({ db }) => this.db = db);
+        this.db = dependencies.db;
     }
 
 }
