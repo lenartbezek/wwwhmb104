@@ -39,9 +39,4 @@ async function start() {
     });
 }
 
-start()
-    .catch((e) => {
-        // tslint:disable-next-line: no-console
-        console.error(e);
-        process.exit(1);
-    });
+start();

@@ -1,5 +1,6 @@
 import { makeExecutableSchema, ValidationError } from "apollo-server-express";
 import { GraphQLFieldResolver, GraphQLObjectType, GraphQLSchema } from "graphql";
+import request = require("request-promise-native");
 import { apm } from "./apm";
 import { Context } from "./context";
 
@@ -17,6 +18,8 @@ const typeDefs = /* GraphQL */`
   }
 
   type Query {
+    hello: String!
+
     users: [User!]
     posts: [Post!]
 
@@ -52,6 +55,7 @@ export const schema = makeExecutableSchema<Context>({
             },
         },
         Query: {
+            hello: () => request("http://localhost:8081/hello"),
             posts: async (source, args, ctx, info) => {
                 return ctx.db.collection("posts").find().toArray();
             },
