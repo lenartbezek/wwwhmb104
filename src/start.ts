@@ -1,3 +1,4 @@
+import "./apm";
 
 import * as express from "express";
 import { connectToDb } from "./mongo";

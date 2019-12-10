@@ -1,4 +1,6 @@
 import { makeExecutableSchema, ValidationError } from "apollo-server-express";
+import { GraphQLFieldResolver, GraphQLObjectType, GraphQLSchema } from "graphql";
+import { apm } from "./apm";
 import { Context } from "./context";
 
 const typeDefs = /* GraphQL */`
@@ -68,4 +70,42 @@ export const schema = makeExecutableSchema<Context>({
             },
         },
     },
+});
+
+function wrapSchema<TContext>(
+    s: GraphQLSchema,
+    wrapper: <TSource, TArgs>(resolver: GraphQLFieldResolver<TSource, TContext, TArgs>) =>
+        GraphQLFieldResolver<TSource, TContext, TArgs>,
+) {
+    const types = s.getTypeMap();
+    for (const type of Object.values(types)) {
+        if (type.name.startsWith("__")) {
+            continue;
+        }
+
+        if (type instanceof GraphQLObjectType) {
+            const fields = type.getFields();
+
+            for (const field of Object.values(fields)) {
+                if (!field.resolve) {
+                    continue;
+                }
+                field.resolve = wrapper(field.resolve);
+            }
+        }
+    }
+}
+
+wrapSchema<Context>(schema, (resolve) => {
+    return async (source, args, context, info) => {
+        const name = `${info.parentType.name}.${info.fieldName}`;
+        const span = apm.startSpan(name);
+        span?.setType("graphql");
+        try {
+            const result = await resolve(source, args, context, info);
+            return result;
+        } finally {
+            span?.end();
+        }
+    };
 });
